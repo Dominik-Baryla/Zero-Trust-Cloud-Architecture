@@ -21,22 +21,22 @@ Zautomatyzowane środowisko chmurowe zbudowane w modelu Infrastructure as Code (
 
 ## 📂 Struktura Repozytorium
 
-Projekt został podzielony na dwie główne warstwy:
+Projekt został zorganizowany w architekturze Monorepo, precyzyjnie oddzielając kod wdrażania infrastruktury od konfiguracji samych usług webowych:
 
-\`\`\`text
-.
-├── infrastructure/       # Warstwa IaC i konfiguracji systemu
-│   ├── terraform/        # Pliki konfiguracyjne Terraform (powoływanie zasobów)
-│   └── ansible/          # Playbooki Ansible (UFW, Fail2Ban, Docker, hardening)
+```text
+📦 Zero-Trust-Cloud-Architecture
+├── 🏗️ infrastructure/           # Warstwa IaC i automatyzacji (uruchamiana lokalnie)
+│   ├── ☁️ terraform/            # Skrypty powołujące wirtualne maszyny w Oracle Cloud
+│   └── ⚙️ ansible/              # Playbooki: instalacja Dockera, UFW, hardening systemu
 │
-├── services/             # Warstwa aplikacji i proxy
-│   ├── docker-compose.yml# Definicja usług kontenerowych
-│   ├── Caddyfile         # Konfiguracja reverse proxy i certyfikatów SSL
-│   ├── cv-site/          # Dynamiczne portfolio i CV integrujące się z GitHub API
-│   └── wedding-site/     # Interaktywny system RSVP i wizytówka okolicznościowa
+├── 🚀 services/                 # Środowisko produkcyjne i aplikacje (serwer WWW)
+│   ├── 🐳 docker-compose.yml    # Orkestracja kontenerów dla całego ruchu sieciowego
+│   ├── 🛡️ Caddyfile             # Konfiguracja Reverse Proxy, routing i certyfikaty SSL
+│   ├── 👨‍💻 cv-site/              # Aplikacja SPA: interaktywne portfolio z integracją API
+│   └── 💍 wedding-site/         # Dedykowany system RSVP na wydarzenie we wrześniu 2027
 │
-└── README.md
-\`\`\`
+├── 🔒 .gitignore                # Zabezpieczenia zapobiegające wyciekom kluczy i .tfstate
+└── 📖 README.md                 # Główna dokumentacja techniczna projektu
 
 ## ⚙️ Wdrażanie (Deployment)
 
