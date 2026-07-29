@@ -1,0 +1,14 @@
+- hosts: oci_instance
+  become: true
+  tasks:
+    - name: Zainstaluj Dockera i wtyczkę Compose
+      apt:
+        name: [docker.io, docker-compose]
+        state: present
+        update_cache: true
+
+    - name: Dodaj użytkownika ubuntu do grupy docker
+      user:
+        name: ubuntu
+        groups: docker
+        append: true

@@ -1,0 +1,11 @@
+najlepszewesele.mooo.com {
+    root * /usr/share/caddy
+    file_server
+    encode gzip
+}
+
+Dominik-Baryla-CV.mooo.com {
+    root * /var/www/cv
+    file_server
+    encode gzip
+}

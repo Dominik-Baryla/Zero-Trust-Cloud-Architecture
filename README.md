@@ -1,0 +1,47 @@
+# ☁️ Zero-Trust Cloud Infrastructure & Web Services
+
+Zautomatyzowane środowisko chmurowe zbudowane w modelu Infrastructure as Code (IaC), hostujące odizolowane usługi webowe w bezpiecznej sieci VPN (Zero Trust). Projekt demonstruje pełen cykl życia infrastruktury: od powołania zasobów, przez hardening systemu operacyjnego, aż po wdrażanie aplikacji w kontenerach.
+
+## 🏗️ Architektura i Stos Technologiczny
+
+*   **Dostawca chmury:** Oracle Cloud Infrastructure (OCI) - instancje ARM/AMD.
+*   **Infrastructure as Code (IaC):** Terraform.
+*   **Configuration Management:** Ansible.
+*   **Sieć & Bezpieczeństwo:** Tailscale (Zero Trust), UFW, Fail2Ban, rkhunter.
+*   **Konteneryzacja:** Docker & Docker Compose.
+*   **Reverse Proxy:** Caddy Server (automatyczne certyfikaty Let's Encrypt, wirtualne hosty).
+*   **Frontend:** HTML5, CSS3 (Soft-UI/Glassmorphism), Vanilla JS (integracja z GitHub API).
+
+## 🛡️ Bezpieczeństwo (Security-First Approach)
+
+Środowisko zostało zaprojektowane z naciskiem na bezpieczeństwo sieciowe i systemowe:
+1.  **Zero Trust Architecture:** Dostęp administracyjny (SSH) oraz interfejsy zarządzania są całkowicie odcięte od publicznego internetu. Komunikacja odbywa się wyłącznie przez zaszyfrowany tunel Tailscale.
+2.  **Hardening Systemu:** Zautomatyzowany audyt bezpieczeństwa narzędziem **Lynis** wykazał wskaźnik **Hardening index: 77**, co jest wynikiem znacznie powyżej rynkowego standardu dla maszyn typu micro-instance.
+3.  **Separacja Usług:** Aplikacje webowe są odizolowane w architekturze kontenerowej, a Caddy Server dba o bezbłędny routing (Virtual Hosts) na jednym publicznym adresie IP.
+
+## 📂 Struktura Repozytorium
+
+Projekt został podzielony na dwie główne warstwy:
+
+\`\`\`text
+.
+├── infrastructure/       # Warstwa IaC i konfiguracji systemu
+│   ├── terraform/        # Pliki konfiguracyjne Terraform (powoływanie zasobów)
+│   └── ansible/          # Playbooki Ansible (UFW, Fail2Ban, Docker, hardening)
+│
+├── services/             # Warstwa aplikacji i proxy
+│   ├── docker-compose.yml# Definicja usług kontenerowych
+│   ├── Caddyfile         # Konfiguracja reverse proxy i certyfikatów SSL
+│   ├── cv-site/          # Dynamiczne portfolio i CV integrujące się z GitHub API
+│   └── wedding-site/     # Interaktywny system RSVP i wizytówka okolicznościowa
+│
+└── README.md
+\`\`\`
+
+## ⚙️ Wdrażanie (Deployment)
+
+1.  **Infrastruktura:** Powołanie maszyn w OCI za pomocą polecenia `terraform apply`.
+2.  **Konfiguracja:** Zabezpieczenie systemu i instalacja środowiska przy użyciu `ansible-playbook`.
+3.  **Usługi:** Uruchomienie aplikacji webowych i proxy komendą `docker-compose up -d` w warstwie `services/`.
+
+*(Uwaga: Ze względów bezpieczeństwa pliki stanu .tfstate, pliki zmiennych .tfvars oraz klucze prywatne SSH zostały wykluczone z tego repozytorium).*

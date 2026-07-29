@@ -1,0 +1,15 @@
+services:
+  caddy:
+    image: caddy:2
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - ./wedding-site:/usr/share/caddy
+      - ./cv-site:/var/www/cv
+      - caddy_data:/data
+    restart: unless-stopped
+
+volumes:
+  caddy_data:
