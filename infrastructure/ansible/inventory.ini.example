@@ -1,0 +1,4 @@
+# Skopiuj jako inventory.ini (plik jest w .gitignore) i wpisz własne wartości.
+# Adres to IP instancji w sieci Tailscale (100.x.y.z), nie publiczny adres OCI.
+[oci_instance]
+100.x.y.z  ansible_user=ubuntu ansible_ssh_private_key_file=~/.ssh/<nazwa_klucza>

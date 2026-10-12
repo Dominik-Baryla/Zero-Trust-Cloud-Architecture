@@ -4,11 +4,28 @@
 *.tfstate.*
 *.tfvars
 *.tfvars.json
+!terraform.tfvars.example
 crash.log
 .terraformrc
 terraform.rc
 
-# System
+# Sekrety i klucze (nigdy do Gita)
+.env
+**/.env
+*.pem
+*.key
+*_ed25519
+*_rsa
+*.gpg
+
+# Ansible: prawdziwy inventory zostaje lokalnie, w repo tylko .example
+infrastructure/ansible/inventory.ini
+
+# Python / edytory / system
+venv/
+.venv/
+__pycache__/
+*.pyc
+.vscode/
 .DS_Store
 Thumbs.db
-

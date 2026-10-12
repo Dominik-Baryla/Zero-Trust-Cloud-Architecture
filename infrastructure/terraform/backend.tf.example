@@ -1,0 +1,24 @@
+# Zdalny stan Terraform w OCI Object Storage (backend zgodny z S3).
+# Skopiuj jako backend.tf, uzupelnij wartosci, potem: terraform init -migrate-state
+#
+# Wymagane (jednorazowo, w konsoli OCI):
+#   1. Bucket np. "tfstate-homelab" (prywatny, wlaczone wersjonowanie).
+#   2. Customer Secret Key (My profile -> Customer secret keys) -> access_key / secret_key.
+#      Klucze podaj przez zmienne srodowiskowe, NIE w pliku:
+#        export AWS_ACCESS_KEY_ID=...  export AWS_SECRET_ACCESS_KEY=...
+terraform {
+  backend "s3" {
+    bucket = "tfstate-homelab"
+    key    = "home-cloud/terraform.tfstate"
+    region = "<region, np. eu-frankfurt-1>"
+    endpoints = {
+      s3 = "https://<namespace>.compat.objectstorage.<region>.oraclecloud.com"
+    }
+    skip_region_validation      = true
+    skip_credentials_validation = true
+    skip_requesting_account_id  = true
+    skip_metadata_api_check     = true
+    skip_s3_checksum            = true
+    use_path_style              = true
+  }
+}

@@ -1,0 +1,8 @@
+# Skopiuj jako terraform.tfvars (plik jest w .gitignore) i uzupelnij.
+tenancy_ocid        = "ocid1.tenancy.oc1..<...>"
+user_ocid           = "ocid1.user.oc1..<...>"
+fingerprint         = "aa:bb:cc:..."   # odcisk klucza API z OCI -> My profile -> API keys
+private_key_path    = "~/.oci/oracle_key.pem"
+region              = "eu-frankfurt-1"
+compartment_id      = "ocid1.tenancy.oc1..<...>"
+ssh_public_key_path = "~/.ssh/<nazwa_klucza>.pub"

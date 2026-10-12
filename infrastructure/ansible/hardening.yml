@@ -1,36 +1,60 @@
+---
+# Hardening systemu i firewall hosta.
+#
+# Model dostępu do SSH (dwie warstwy, bez polegania na jednej):
+#   1. OCI Security List: port 22 NIE jest otwarty z internetu (patrz network.tf).
+#   2. UFW: port 22 dozwolony wyłącznie na interfejsie tailscale0.
+# sshd nasłuchuje na 0.0.0.0, bo przypięcie do adresu Tailscale zawodzi, gdy
+# tailscaled nie zdąży wstać przed sshd. Zamknięcie dostępu zapewniają warstwy 1 i 2.
 - hosts: oci_instance
   become: true
   collections:
     - devsec.hardening
   vars:
-    # Nasłuchuj SSH tylko na interfejsie VPN Tailscale
-    ssh_listen_to: ["{{ inventory_hostname }}"]
+    ssh_server_hardening: true
+    ssh_listen_to: ['0.0.0.0']
   roles:
     - os_hardening
     - ssh_hardening
   tasks:
-    - name: Zainstaluj fail2ban i unattended-upgrades
+    - name: Zainstaluj ufw, fail2ban i unattended-upgrades
       apt:
-        name: [fail2ban, unattended-upgrades, ufw]
+        name: [ufw, fail2ban, unattended-upgrades]
         state: present
         update_cache: true
 
-    - name: ufw — domyślnie odrzucaj ruch przychodzący
-      community.general.ufw:
-        state: enabled
-        policy: deny
-        direction: incoming
-
-    - name: ufw — SSH tylko z interfejsu tailscale0
+    # Reguły PRZED włączeniem UFW, żeby nie odciąć sobie dostępu.
+    - name: ufw - SSH tylko z interfejsu tailscale0
       community.general.ufw:
         rule: allow
         interface: tailscale0
         direction: in
         port: '22'
+        proto: tcp
 
-    - name: ufw — strona publiczna (80/443)
+    - name: ufw - Tailscale P2P (UDP 41641), bez tego tylko relay DERP
+      community.general.ufw:
+        rule: allow
+        port: '41641'
+        proto: udp
+
+    - name: ufw - strona publiczna (80/443)
       community.general.ufw:
         rule: allow
         port: '{{ item }}'
         proto: tcp
       loop: ['80', '443']
+
+    - name: ufw - domyślnie odrzucaj ruch przychodzący i włącz
+      community.general.ufw:
+        state: enabled
+        policy: deny
+        direction: incoming
+
+    - name: Włącz automatyczne aktualizacje bezpieczeństwa
+      copy:
+        dest: /etc/apt/apt.conf.d/20auto-upgrades
+        mode: '0644'
+        content: |
+          APT::Periodic::Update-Package-Lists "1";
+          APT::Periodic::Unattended-Upgrade "1";

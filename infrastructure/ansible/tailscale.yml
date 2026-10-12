@@ -1,0 +1,52 @@
+---
+# Instalacja Tailscale i dołączenie do tailnetu z tagiem tag:cloud.
+# Przydatne przy odtwarzaniu instancji od zera. Na działającej maszynie playbook
+# niczego nie zmienia, bo węzeł jest już zalogowany.
+#
+# Klucz uwierzytelniający (Settings -> Keys -> Auth keys, jednorazowy, z tagiem tag:cloud)
+# podaj przez zmienną środowiskową, nigdy w pliku:
+#   export TS_AUTHKEY='tskey-auth-...'
+#   ansible-playbook -i inventory.ini tailscale.yml
+#
+# Pierwsze połączenie na nowej maszynie wymaga dostępu SSH po publicznym IP
+# (tymczasowo otwórz port 22 w Security List i zamknij go zaraz po tym playbooku).
+- hosts: oci_instance
+  become: true
+  tasks:
+    - name: Pobierz klucz repozytorium Tailscale
+      get_url:
+        url: https://pkgs.tailscale.com/stable/ubuntu/noble.noarmor.gpg
+        dest: /usr/share/keyrings/tailscale-archive-keyring.gpg
+        mode: '0644'
+
+    - name: Dodaj repozytorium Tailscale
+      apt_repository:
+        repo: "deb [signed-by=/usr/share/keyrings/tailscale-archive-keyring.gpg] https://pkgs.tailscale.com/stable/ubuntu noble main"
+        filename: tailscale
+        state: present
+
+    - name: Zainstaluj Tailscale
+      apt:
+        name: tailscale
+        state: present
+        update_cache: true
+
+    - name: Włącz tailscaled
+      service:
+        name: tailscaled
+        state: started
+        enabled: true
+
+    - name: Sprawdź, czy węzeł jest już zalogowany
+      command: tailscale status --json
+      register: ts_status
+      changed_when: false
+      failed_when: false
+
+    - name: Dołącz do tailnetu z tagiem tag:cloud
+      command: >
+        tailscale up
+        --authkey={{ lookup('env', 'TS_AUTHKEY') }}
+        --advertise-tags=tag:cloud
+      when: "'\"BackendState\": \"Running\"' not in ts_status.stdout"
+      no_log: true

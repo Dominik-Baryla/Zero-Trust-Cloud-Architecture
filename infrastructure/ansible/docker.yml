@@ -1,9 +1,23 @@
+---
+# Instalacja Dockera i wtyczki Compose na instancji OCI.
+#
+# UWAGA: poprzednia wersja ustawiała w /etc/docker/daemon.json "iptables": false.
+# Przy tym ustawieniu Docker nie tworzy reguł NAT, więc kontener (np. Caddy)
+# nie ma wyjścia do internetu i nie odnowi certyfikatów Let's Encrypt.
+# Granicą bezpieczeństwa jest Security List w OCI (otwarte tylko 80/443 i UDP 41641)
+# oraz UFW, dlatego Docker zarządza iptables sam.
+#
+# Jeśli na działającym serwerze istnieje /etc/docker/daemon.json z "iptables": false,
+# usuń go (sudo rm /etc/docker/daemon.json; sudo systemctl restart docker)
+# i zrestartuj stos: docker-compose up -d --force-recreate.
 - hosts: oci_instance
   become: true
   tasks:
-    - name: Zainstaluj Dockera i wtyczkę Compose
+    - name: Zainstaluj Dockera i Compose v2
       apt:
-        name: [docker.io, docker-compose]
+        name:
+          - docker.io
+          - docker-compose-v2
         state: present
         update_cache: true
 
@@ -12,3 +26,9 @@
         name: ubuntu
         groups: docker
         append: true
+
+    - name: Włącz i uruchom Dockera
+      service:
+        name: docker
+        state: started
+        enabled: true

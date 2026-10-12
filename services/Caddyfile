@@ -1,10 +1,25 @@
+# Wspolne naglowki bezpieczenstwa dla obu stron.
+# (Content-Security-Policy pominieto celowo: cv-site korzysta z zewnetrznych zasobow;
+#  dodaj ja dopiero po przetestowaniu w przegladarce.)
+(security) {
+    header {
+        Strict-Transport-Security "max-age=31536000"
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "DENY"
+        Referrer-Policy "strict-origin-when-cross-origin"
+        -Server
+    }
+}
+
 najlepszewesele.mooo.com {
+    import security
     root * /usr/share/caddy
     file_server
     encode gzip
 }
 
 Dominik-Baryla-CV.mooo.com {
+    import security
     root * /var/www/cv
     file_server
     encode gzip

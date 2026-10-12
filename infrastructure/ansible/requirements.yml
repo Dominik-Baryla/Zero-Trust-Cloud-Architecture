@@ -1,0 +1,5 @@
+---
+# Instalacja: ansible-galaxy collection install -r requirements.yml
+collections:
+  - name: devsec.hardening
+  - name: community.general

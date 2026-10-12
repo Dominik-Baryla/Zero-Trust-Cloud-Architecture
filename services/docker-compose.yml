@@ -1,13 +1,15 @@
 services:
   caddy:
+    # Przypnij do wersji, ktora dzialajaca instancja faktycznie uzywa:
+    #   docker inspect services_caddy_1 --format '{{.Config.Image}}' ; docker exec services_caddy_1 caddy version
     image: caddy:2
     ports:
       - "80:80"
       - "443:443"
     volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile
-      - ./wedding-site:/usr/share/caddy
-      - ./cv-site:/var/www/cv
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./wedding-site:/usr/share/caddy:ro
+      - ./cv-site:/var/www/cv:ro
       - caddy_data:/data
     restart: unless-stopped
 
