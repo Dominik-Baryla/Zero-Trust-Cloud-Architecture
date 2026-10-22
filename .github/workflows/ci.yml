@@ -1,0 +1,107 @@
+# GitHub Actions CI - Publiczne repozytorium Zero-Trust-Cloud-Architecture
+# Odpowiada za: skanowanie sekretów, walidację Terraform, Ansible, YAML oraz Caddy i Docker Compose.
+# CI niczego nie wdraża: nie łączy się z OCI ani z serwerem (brak terraform plan/apply).
+
+name: CI - Cloud
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+# Token GITHUB_TOKEN tylko do odczytu (zasada najmniejszych uprawnień)
+permissions:
+  contents: read
+
+jobs:
+  # Zadanie 1: Skanowanie repozytorium w poszukiwaniu wycieków sekretów i kluczy
+  security-scan:
+    name: Skanowanie bezpieczeństwa (Gitleaks)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Pobranie kodu repozytorium (pełna historia)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Skanowanie Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Kontrola, czy w repo nie ma stanu Terraform ani prawdziwego inventory
+        run: |
+          # Te pliki zawierają OCID-y, adresy i ścieżki kluczy, więc nie mogą trafić do repo publicznego
+          bad=$(git ls-files | grep -E '\.tfstate|\.tfvars$|(^|/)inventory\.ini$|(^|/)\.env$' || true)
+          if [ -n "$bad" ]; then
+            echo "BŁĄD: w repozytorium są pliki, które powinny być tylko lokalnie:"
+            echo "$bad"
+            exit 1
+          fi
+          echo "OK: brak stanu Terraform, tfvars, inventory.ini i .env w repozytorium."
+
+  # Zadanie 2: Formatowanie i walidacja kodu Terraform (bez backendu i bez dostępu do OCI)
+  terraform:
+    name: Terraform (fmt i validate)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: infrastructure/terraform
+    steps:
+      - name: Pobranie kodu repozytorium
+        uses: actions/checkout@v4
+
+      - name: Instalacja Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Sprawdzenie formatowania
+        run: terraform fmt -check -recursive
+
+      - name: Inicjalizacja bez backendu
+        run: terraform init -backend=false -input=false
+
+      - name: Walidacja konfiguracji
+        run: terraform validate
+
+  # Zadanie 3: Składnia playbooków Ansible oraz linting YAML
+  ansible:
+    name: Ansible i YAML (syntax-check i yamllint)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Pobranie kodu repozytorium
+        uses: actions/checkout@v4
+
+      - name: Instalacja Ansible i yamllint
+        run: |
+          pip install --user ansible-core yamllint
+          ansible-galaxy collection install -r infrastructure/ansible/requirements.yml
+
+      - name: Walidacja plików YAML
+        run: yamllint -d relaxed .
+
+      - name: Sprawdzenie składni playbooków
+        working-directory: infrastructure/ansible
+        run: |
+          # inventory.ini jest w .gitignore, więc używamy przykładowego
+          for playbook in hardening.yml tailscale.yml docker.yml; do
+            ansible-playbook -i inventory.ini.example --syntax-check "$playbook"
+          done
+
+  # Zadanie 4: Walidacja Caddyfile i pliku Docker Compose usług
+  services:
+    name: Usługi (Caddy i Docker Compose)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Pobranie kodu repozytorium
+        uses: actions/checkout@v4
+
+      - name: Walidacja Caddyfile
+        run: |
+          docker run --rm -v "$PWD/services/Caddyfile:/etc/caddy/Caddyfile:ro" caddy:2 \
+            caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
+
+      - name: Walidacja docker-compose.yml
+        run: docker compose -f services/docker-compose.yml config -q
